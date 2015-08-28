@@ -38,6 +38,9 @@ Array.prototype.sum = function (getter, initial) {
     }, initial);
 };
 
+/**
+ * card counter app
+ */
 var App = function(mode) {
     this.mode = mode;
     this.reset();
@@ -57,15 +60,15 @@ App.prototype.reset = function() {
 /**
  * Creates a list of all cards
  */
-App.prototype.getCardList = function(cards, callback) {
+App.prototype.getCardList = function(cards, callback, dontBreak) {
     var list, i, card, previousColor = 0;
     list = node('div');
     for (i = 0; i < cards.length; i += 1) {
-        card = node('button', cards[i].toString(this.state.trump), 'card color-' + cards[i].color);
+        card = cards[i].getNode(this.state.trump);
         if (callback) {
             card.onclick = callback.bind(this, cards[i]);
         }
-        if (cards[i].color !== previousColor) {
+        if (!dontBreak && cards[i].color !== previousColor) {
             list.appendChild(node('br'));
             previousColor = cards[i].color;
         }
@@ -83,7 +86,7 @@ App.prototype.getCardListHand = function(callback) {
     var hand = this.state.hand;
     return this.getCardList(CARDS.filter(function (card) {
         return hand.indexOf(card) !== -1;
-    }), callback);
+    }), callback, true);
 };
 
 App.prototype.render = function() {
@@ -102,21 +105,19 @@ App.prototype.getColorList = function(callback) {
     var color, list, button;
     list = node('div');
     for (color = 0; color < COLORS.length; color += 1) {
-        button = node('button', COLORS[color], 'card color-' + color);
-        button.onclick = callback.bind(this, {
-            color: color
-        });
+        button = node('button', COLORS[color], 'color color-' + color);
+        button.onclick = callback.bind(this, color);
         list.appendChild(button);
     }
     return list;
 };
-App.prototype.setTrump = function(trump) {
-    console.log('trump set to: ' + COLORS[trump.color]);
+App.prototype.setTrump = function(color) {
+    console.log('trump set to: ' + COLORS[color]);
     this.mode = MODES.DEAL;
-    this.state.trump = trump.color;
+    this.state.trump = color;
 
     var infoNode;
-    infoNode = node('div', 'Trumpf: ' + COLORS[trump.color], 'card color-' + trump.color);
+    infoNode = node('div', 'Trumpf: ' + COLORS[color], 'color color-' + color);
     document.getElementById('trump').appendChild(infoNode);
     this.render();
 };
@@ -230,8 +231,8 @@ App.prototype.showPoints = function() {
 
 
 document.addEventListener('DOMContentLoaded', function () {
-    var app = new App(MODES.TRUMP);
-    // var app = new App(MODES.ESTIMATE);
+    // var app = new App(MODES.TRUMP);
+    var app = new App(MODES.DEAL);
     app.render();
 });
 

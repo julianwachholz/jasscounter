@@ -2,18 +2,21 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    color: #444444;
+    color: #fffaff;
+    text-shadow: 0 0 1px rgba(0,0,0,.9);
 }
 body {
     width: 1200px;
     margin: 1em auto;
     font: normal 19px/1.64 sans-serif;
+    color: #444;
+    background: #259416;
 }
 .top-info {
     float: right;
 }
 p {
-    margin: 1em 0 0 0;
+    margin: 1em 0 .3em 0;
 }
 #game {
     margin-top: 60px;
@@ -31,6 +34,23 @@ button {
     cursor: pointer;
     background-color: #f0f0f0;
 }
+.color {
+    padding: 1em;
+    margin: .4em .4em 0 0;
+    font-size: .8em;
+    border: 1px solid rgba(0,0,0,0.2);
+    border-radius: 6px;
+}
+/* schellen */
+.color-0 { background-color: #f1e9c4; }
+/* rosen */
+.color-1 { background-color: #f2d5c9; }
+/* schilten */
+.color-2 { background-color: #e7e7e7; }
+/* eichel */
+.color-3 { background-color: #d8f4d2; }
+
+
 
 table {
     border-collapse: collapse;
@@ -56,18 +76,54 @@ ul.float li:after {
 }
 
 .card {
-    padding: 1em;
-    margin: .4em .4em 0 0;
-    font-size: .8em;
-    border: 1px solid rgba(0,0,0,0.2);
+    display: inline-block;
+    background: url(cards.png) no-repeat;
+    margin: 0 16px 16px 0;
+    width: 104px;
+    height: 160px;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.75);
+    border: none;
     border-radius: 6px;
+    overflow: hidden;
+    text-indent: -1000px;
 }
 
-/* schellen */
-.color-0 { background-color: #f1e9c4; }
-/* rosen */
-.color-1 { background-color: #f2d5c9; }
-/* schilten */
-.color-2 { background-color: #e7e7e7; }
-/* eichel */
-.color-3 { background-color: #d8f4d2; }
+.schellen.c6 { background-position: 0 0; }
+.schellen.c7 { background-position: 0 -644px; }
+.schellen.c8 { background-position: 0 -1288px; }
+.schellen.c9 { background-position: 0 -1932px; }
+.schellen.c10 { background-position: -210px -966px; }
+.schellen.under { background-position: -105px -1128px; }
+.schellen.ober { background-position: -210px -322px; }
+.schellen.koenig { background-position: -105px -1771px; }
+.schellen.as { background-position: -105px -484px; }
+
+.rosen.c6 { background-position: 0 -322px; }
+.rosen.c7 { background-position: 0 -966px; }
+.rosen.c8 { background-position: 0 -1610px; }
+.rosen.c9 { background-position: -105px -161px; }
+.rosen.c10 { background-position: -210px -1288px; }
+.rosen.under { background-position: -105px -1449px; }
+.rosen.ober { background-position: -210px -644px; }
+.rosen.koenig { background-position: -210px 0; }
+.rosen.as { background-position: -105px -644px; }
+
+.schilten.c6 { background-position: 0 -484px; }
+.schilten.c7 { background-position: 0 -1128px; }
+.schilten.c8 { background-position: 0 -1771px; }
+.schilten.c9 { background-position: -105px -322px; }
+.schilten.c10 { background-position: -210px -1449px; }
+.schilten.under { background-position: -105px -1610px; }
+.schilten.ober { background-position: -210px -805px; }
+.schilten.koenig { background-position: -210px -161px; }
+.schilten.as { background-position: -105px -805px; }
+
+.eichel.c6 { background-position: 0 -161px; }
+.eichel.c7 { background-position: 0 -805px; }
+.eichel.c8 { background-position: 0 -1449px; }
+.eichel.c9 { background-position: -105px 0; }
+.eichel.c10 { background-position: -210px -1128px; }
+.eichel.under { background-position: -105px -1288px; }
+.eichel.ober { background-position: -210px -484px; }
+.eichel.koenig { background-position: -105px -1932px; }
+.eichel.as { background-position: -105px -966px; }

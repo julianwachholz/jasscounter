@@ -19,6 +19,18 @@ var VALUES = [
     'As'
 ];
 
+var VALUE_CLASSES = [
+    'c6',
+    'c7',
+    'c8',
+    'c9',
+    'c10',
+    'under',
+    'ober',
+    'koenig',
+    'as'
+];
+
 var Card = function(color, value) {
     if (!(this instanceof Card)) {
         return new Card(color, value);
@@ -27,11 +39,17 @@ var Card = function(color, value) {
     this.value = value;
 };
 Card.prototype.toString = function(trump) {
-    var str = COLORS[this.color] + ' ' + VALUES[this.value];
-    if (this.color === trump && (this.value === 3 || this.value === 5)) {
-        str = '*' + str + '*';
-    }
-    return str;
+    return COLORS[this.color] + ' ' + VALUES[this.value];
+};
+Card.prototype.getNode = function(trump) {
+    var node = document.createElement('button');
+    node.innerHTML = this.toString(trump);
+    node.className = [
+        'card',
+        COLORS[this.color].toLowerCase(),
+        VALUE_CLASSES[this.value],
+    ].join(' ');
+    return node;
 };
 Card.prototype.getPoints = function(trump) {
     if (this.color === trump) {
