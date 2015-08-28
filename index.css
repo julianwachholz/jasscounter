@@ -1,0 +1,73 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    color: #444444;
+}
+body {
+    width: 1200px;
+    margin: 1em auto;
+    font: normal 19px/1.64 sans-serif;
+}
+.top-info {
+    float: right;
+}
+p {
+    margin: 1em 0 0 0;
+}
+#game {
+    margin-top: 60px;
+}
+
+input, button[type="submit"] {
+    margin: 0 .5em .4em 0;
+    min-width: 5em;
+    padding: .1em .3em;
+    font: normal 17px/1.64 sans-serif;
+    border-radius: 6px;
+    border: 1px solid rgba(0,0,0,0.2);
+}
+button {
+    cursor: pointer;
+    background-color: #f0f0f0;
+}
+
+table {
+    border-collapse: collapse;
+    font: normal 16px/1.64 sans-serif;
+}
+td, th {
+    padding: .2em .4em;
+    text-align: right;
+}
+th {
+    border-bottom: 1px solid #f0f0f0;
+}
+
+ul.float {
+    list-style: none;
+}
+ul.float li {
+    float: left;
+    margin-right: 10px;
+}
+ul.float li:after {
+    content: ', ';
+}
+
+.card {
+    padding: 1em;
+    margin: .4em .4em 0 0;
+    font-size: .8em;
+    border: 1px solid rgba(0,0,0,0.2);
+    border-radius: 6px;
+}
+
+/* schellen */
+.color-0 { background-color: #f1e9c4; }
+/* rosen */
+.color-1 { background-color: #f2d5c9; }
+/* schilten */
+.color-2 { background-color: #e7e7e7; }
+/* eichel */
+.color-3 { background-color: #d8f4d2; }
