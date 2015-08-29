@@ -26,6 +26,9 @@ var node = function (name, opts, className) {
     return n;
 };
 var p = node.bind(this, 'p');
+var badge = function (text) {
+    return node('span', text, 'card-badge');
+};
 Array.prototype.sum = function (getter, initial) {
     if (!initial) {
         initial = 0;
@@ -37,24 +40,79 @@ Array.prototype.sum = function (getter, initial) {
         return p + getter(c);
     }, initial);
 };
+Math.randInt = function (min, max) {
+    if (!max) {
+        max = min;
+        min = 0;
+    }
+    return Math.floor(Math.floor(Math.random() * (max - min)) + min);
+};
+
 
 /**
  * card counter app
  */
-var App = function(mode) {
-    this.mode = mode;
+var App = function() {
     this.reset();
 };
 App.prototype.reset = function() {
+    this.mode = MODES.TRUMP;
     this.state = {
         trump: null,
         hand: [],
         played: [],
-        turns: [],
+        tricks: [],
         estimate: null,
-        points: null,
+        points: 0,
         round: 1
     };
+};
+/**
+ * Fake the current game's state.
+ */
+App.prototype.fake = function (mode, rounds) {
+    if (mode === MODES.TRUMP) {
+        this.mode = mode;
+        return;
+    }
+    // Fake trump color
+    this.setTrump(Math.randInt(COLORS.length));
+
+    if (mode === MODES.DEAL) {
+        this.mode = mode;
+        return;
+    }
+
+    // fake hand dealt cards
+    var cards, hand = [];
+    for (var i = 0; i < ROUNDS; i += 1) {
+        cards = CARDS.filter(function (card) {
+            return hand.indexOf(card) === -1;
+        });
+        hand.push(cards[Math.randInt(cards.length)]);
+        console.log('[fake] dealt card ' + hand[hand.length - 1].toString());
+    }
+    this.state.hand = hand;
+
+    if (mode === MODES.ESTIMATE) {
+        this.mode = mode;
+        return;
+    }
+
+    // fake estimate
+    var i, total, points = [];
+    for (i = 0; i < ROUNDS; i += 1) {
+        points[i] = this.state.hand[i].getPoints(this.state.trump);
+        if (this.state.trump === this.state.hand[i].color) {
+            points[i] *= 2;
+        }
+    }
+
+    total = points.sum();
+    this.verifyEstimate(null, Math.randInt(total - total * 0.1, total + total * 0.4));
+    console.log('[fake] points in hand %d, guesstimate: %d', total, this.state.estimate);
+
+    this.mode = mode;
 };
 
 /**
@@ -65,6 +123,7 @@ App.prototype.getCardList = function(cards, callback, dontBreak) {
     list = node('div');
     for (i = 0; i < cards.length; i += 1) {
         card = cards[i].getNode(this.state.trump);
+        this.annotateCard(cards[i], card);
         if (callback) {
             card.onclick = callback.bind(this, cards[i]);
         }
@@ -87,6 +146,23 @@ App.prototype.getCardListHand = function(callback) {
     return this.getCardList(CARDS.filter(function (card) {
         return hand.indexOf(card) !== -1;
     }), callback, true);
+};
+
+/**
+ * Annotate cards with useful badges
+ * - card value
+ * - highest card in play of a color ("bock")
+ */
+App.prototype.annotateCard = function(card, node) {
+    if (card.color === this.state.trump) {
+        if (card.value === VALUES.indexOf('9')) {
+            node.appendChild(badge('Nell'));
+        }
+        if (card.value === VALUES.indexOf('Under')) {
+            node.appendChild(badge('Puur'));
+        }
+    }
+    // TODO figure out if this is the highest card in play
 };
 
 App.prototype.render = function() {
@@ -151,8 +227,8 @@ App.prototype.renderEstimate = function() {
     gameNode.appendChild(p('Deine Hand:'));
     gameNode.appendChild(this.getCardListHand());
     gameNode.appendChild(p('Punktewerte:'));
-    var list = node('ul', {className:'float'}), i, text, total, points = [], extra = 0;
-    for (i = 0; i < this.state.hand.length; i += 1) {
+    var list = node('ul', '', 'float'), i, text, total, points = [], extra = 0;
+    for (i = 0; i < ROUNDS; i += 1) {
         points[i] = this.state.hand[i].getPoints(this.state.trump);
         if (points[i] <= 0) {
             continue;
@@ -166,7 +242,7 @@ App.prototype.renderEstimate = function() {
     gameNode.appendChild(list);
     total = points.sum();
     gameNode.appendChild(p('Total: <b>' + total + '</b>'));
-    gameNode.appendChild(p('Trümpfe doppelt: <b>' + (total + extra) + '</b>'));
+    gameNode.appendChild(p('Trümpfe doppelt gezählt: <b>' + (total + extra) + '</b>'));
 };
 App.prototype.getEstimateForm = function() {
     var form = node('form');
@@ -185,9 +261,12 @@ App.prototype.getEstimateForm = function() {
     }));
     return form;
 };
-App.prototype.verifyEstimate = function(event) {
-    event.preventDefault();
-    var estimate = parseInt(event.target.estimate.value, 10);
+App.prototype.verifyEstimate = function(event, value) {
+    if (event) {
+        event.preventDefault();
+    }
+
+    var estimate = value || parseInt(event.target.estimate.value, 10);
     if (estimate >= 0 && estimate <= 157) {
         this.mode = MODES.PLAY;
         this.state.estimate = estimate;
@@ -216,23 +295,38 @@ App.prototype.renderPlay = function() {
             return card.getPoints(state.trump);
         });
 
-    gameNode.appendChild(p('Runde ' + state.round + ' / ' + ROUNDS));
+    gameNode.appendChild(p('Stich ' + state.round + ' / ' + ROUNDS + '<br>Klick auf die Karten in gespielter Reihenfolge.'));
+    gameNode.appendChild(this.getCardsInBet());
 
     gameNode.appendChild(p('Karten im Spiel (' + unplayedPoints + ')'));
-    gameNode.appendChild(this.getCardList(unplayedCards));
+    gameNode.appendChild(this.getCardList(unplayedCards, this.playCard.bind(this)));
 
     gameNode.appendChild(p('Deine Hand (' + handPoints + ')'));
-    gameNode.appendChild(this.getCardListHand());
+    gameNode.appendChild(this.getCardListHand(this.playCard.bind(this)));
 };
 App.prototype.showPoints = function() {
     document.getElementById('estimate-points').innerHTML = this.state.points;
     document.getElementById('estimate-diff').innerHTML = Math.abs(this.state.estimate - this.state.points);
 };
+App.prototype.getCardsInBet = function() {
+    var list = node('div');
+    return list;
+};
+App.prototype.playCard = function(card) {
+    console.log('play card', card);
+    if (this.state.tricks.length !== this.state.round) {
+        this.state.tricks.push({
+            winner: null,
+            cards: []
+        });
+    }
+    var currentTrick = this.state.tricks[this.state.round - 1];
+};
 
 
 document.addEventListener('DOMContentLoaded', function () {
-    // var app = new App(MODES.TRUMP);
-    var app = new App(MODES.DEAL);
+    var app = new App();
+    app.fake(MODES.PLAY);
     app.render();
 });
 

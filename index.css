@@ -2,14 +2,14 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+}
+html,
+body {
     color: #fffaff;
     text-shadow: 0 0 1px rgba(0,0,0,.9);
-}
-body {
     width: 1200px;
     margin: 1em auto;
     font: normal 19px/1.64 sans-serif;
-    color: #444;
     background: #259416;
 }
 .top-info {
@@ -32,7 +32,9 @@ input, button[type="submit"] {
 }
 button {
     cursor: pointer;
-    background-color: #f0f0f0;
+    background-color: #b0b0b0;
+    color: #fffaff;
+    text-shadow: 0 0 1px rgba(0,0,0,.9);
 }
 .color {
     padding: 1em;
@@ -42,19 +44,20 @@ button {
     border-radius: 6px;
 }
 /* schellen */
-.color-0 { background-color: #f1e9c4; }
+.color-0 { background-color: #e2d600; }
 /* rosen */
-.color-1 { background-color: #f2d5c9; }
+.color-1 { background-color: #d84600; }
 /* schilten */
-.color-2 { background-color: #e7e7e7; }
+.color-2 { background-color: #6d6d6d; }
 /* eichel */
-.color-3 { background-color: #d8f4d2; }
+.color-3 { background-color: #2bdd05; }
 
 
 
 table {
     border-collapse: collapse;
     font: normal 16px/1.64 sans-serif;
+    margin-right: 1em;
 }
 td, th {
     padding: .2em .4em;
@@ -67,15 +70,21 @@ th {
 ul.float {
     list-style: none;
 }
+ul.float:after {
+    display: table;
+    content: ' ';
+    clear: both;
+}
 ul.float li {
     float: left;
     margin-right: 10px;
 }
-ul.float li:after {
+ul.float li:not(:last-child):after {
     content: ', ';
 }
 
 .card {
+    position: relative;
     display: inline-block;
     background: url(cards.png) no-repeat;
     margin: 0 16px 16px 0;
@@ -86,6 +95,21 @@ ul.float li:after {
     border-radius: 6px;
     overflow: hidden;
     text-indent: -1000px;
+}
+
+.card-badge {
+    position: absolute;
+    text-indent: 0;
+    bottom: 1em;
+    left: 1em;
+    padding: .4em;
+    max-width: 80px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background: #d84600;
+    border: 1px solid #d84600;
+    border-radius: 4px;
 }
 
 .schellen.c6 { background-position: 0 0; }

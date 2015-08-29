@@ -86,5 +86,6 @@ var CARDS = (function() {
 
 window.CARDS = CARDS;
 window.COLORS = COLORS;
+window.VALUES = VALUES;
 
 } (this, this.document, void 0));
