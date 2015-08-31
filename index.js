@@ -15,6 +15,7 @@ var PLAYERS = [
     ['bottom', 'Unten (Spieler)'],
     ['right', 'Rechts']
 ];
+var PLAYER = 2;
 
 var ROUNDS = 9;
 var MAX_POINTS = 157;
@@ -136,7 +137,7 @@ App.prototype.fake = function (mode, rounds) {
 /**
  * Creates a list of all cards
  */
-App.prototype.getCardList = function(cards, callback, dontBreak) {
+App.prototype.getCardList = function(cards, callback, clickable, dontBreak) {
     var list, i, card, previousColor = 0;
     list = node('div');
     for (i = 0; i < cards.length; i += 1) {
@@ -144,6 +145,11 @@ App.prototype.getCardList = function(cards, callback, dontBreak) {
         this.annotateCard(cards[i], card);
         if (callback) {
             card.onclick = callback.bind(this, cards[i]);
+        }
+        if (clickable === true) {
+            card.classList.add('clickable');
+        } else if (clickable === false) {
+            card.classList.add('not-clickable');
         }
         if (!dontBreak && cards[i].color !== previousColor) {
             list.appendChild(node('br'));
@@ -153,19 +159,19 @@ App.prototype.getCardList = function(cards, callback, dontBreak) {
     }
     return list;
 };
-App.prototype.getCardListNoHand = function(callback) {
+App.prototype.getCardListNoHand = function(callback, clickable) {
     var hand = this.state.hand;
     return this.getCardList(CARDS.filter(function (card) {
         return hand.indexOf(card) === -1;
-    }), callback);
+    }), callback, clickable);
 };
-App.prototype.getCardListHand = function(callback) {
+App.prototype.getCardListHand = function(callback, clickable) {
     var hand = this.state.hand,
         played = this.state.played;
 
     return this.getCardList(CARDS.filter(function (card) {
         return hand.indexOf(card) !== -1 && played.indexOf(card) === -1;
-    }), callback, true);
+    }), callback, clickable, true);
 };
 
 /**
@@ -182,7 +188,6 @@ App.prototype.annotateCard = function(card, node) {
             node.appendChild(badge('Puur'));
         }
     }
-    // TODO figure out if this is the highest card in play
 };
 
 App.prototype.render = function() {
@@ -225,7 +230,7 @@ App.prototype.setTrump = function(color) {
 App.prototype.renderDeal = function() {
     var cardlist;
     gameNode.appendChild(p('Klick auf die dir ausgeteilten Karten.'));
-    gameNode.appendChild(this.getCardListNoHand(this.dealCard.bind(this)));
+    gameNode.appendChild(this.getCardListNoHand(this.dealCard.bind(this), true));
     gameNode.appendChild(p('Deine Hand:'));
     gameNode.appendChild(this.getCardListHand());
 };
@@ -309,7 +314,7 @@ App.prototype.renderGiver = function() {
                 && state.played.indexOf(card) === -1;
         });
 
-    gameNode.appendChild(p('Klicke auf den Spieler mit der Vorhand:'));
+    gameNode.appendChild(p('Klicke auf den Spieler mit der Vorhand:', 'center'));
     gameNode.appendChild(this.getPlayerList(this.setGiver.bind(this)));
 
     gameNode.appendChild(p('Karten im Spiel'));
@@ -320,9 +325,13 @@ App.prototype.renderGiver = function() {
 };
 App.prototype.getPlayerList = function(callback) {
     var player, list, button;
-    list = node('div');
+    list = node('div', '', 'trick');
     for (player = 0; player < PLAYERS.length; player += 1) {
-        button = node('button', PLAYERS[player][1], 'color color-' + player);
+        button = node('button', PLAYERS[player][1]);
+        button.classList.add(
+            'card', 'player', 'clickable',
+            PLAYERS[player][0]
+        );
         button.onclick = callback.bind(this, player);
         list.appendChild(button);
     }
@@ -357,30 +366,47 @@ App.prototype.renderPlay = function() {
 
     gameNode.appendChild(this.getTrick());
 
+    var playerTurn = this.getPlayerTurn() === PLAYER;
+
     gameNode.appendChild(p('Karten im Spiel (' + unplayedPoints + ')'));
-    gameNode.appendChild(this.getCardList(unplayedCards, this.playCard.bind(this)));
+    gameNode.appendChild(this.getCardList(unplayedCards, playerTurn ? null : this.playCard.bind(this), !playerTurn));
 
     gameNode.appendChild(p('Deine Hand (' + handPoints + ')'));
-    gameNode.appendChild(this.getCardListHand(this.playCard.bind(this)));
+    gameNode.appendChild(this.getCardListHand(playerTurn? this.playCard.bind(this) : null, playerTurn));
 };
 App.prototype.showPoints = function() {
     document.getElementById('estimate-points').innerHTML = this.state.points;
-    document.getElementById('estimate-diff').innerHTML = Math.abs(this.state.estimate - this.state.points);
+    document.getElementById('estimate-diff').innerHTML =
+        Math.abs(this.state.estimate - this.state.points);
 };
 App.prototype.getTrick = function() {
     var state = this.state,
-        trick, i, card, currentTrick;
+        wrap, trick, i, card, currentTrick;
+
+    wrap = node('div');
     trick = node('div', '', 'trick');
 
     if (state.tricks.length <= 0) {
-        trick.appendChild(p('Stich ' + state.round + ' / ' + ROUNDS
-            + '<br>Klick auf die Karten in gespielter Reihenfolge.'));
-        return trick;
+        wrap.appendChild(p('Stich ' + state.round + ' / ' + ROUNDS
+            + ' - Klick auf die Karten in gespielter Reihenfolge.', 'center'));
+        wrap.appendChild(trick);
+        return wrap;
     }
     currentTrick = state.tricks[state.tricks.length - 1];
 
-    var trickPoints = currentTrick.cards.sum(function (card) { return card.getPoints(state.trump); });
-    trick.appendChild(p('Stich ' + state.round + ' / ' + ROUNDS + ' (' + trickPoints + ')'));
+    var trickPoints = currentTrick.cards.sum(function (card) {
+        return card.getPoints(state.trump);
+    });
+
+    if (currentTrick.cards.length === PLAYERS.length) {
+        wrap.appendChild(p('Stich ' + (state.round-1) + ' Gewinner: '
+            + PLAYERS[currentTrick.winner][1]
+            + ' (' + trickPoints + ')', 'center'));
+    } else {
+        wrap.appendChild(p('Stich ' + state.round + ' / ' + ROUNDS
+            + ' (' + trickPoints + ')', 'center'));
+    }
+    wrap.appendChild(trick);
 
     for (i = 0; i < currentTrick.cards.length; i += 1) {
         card = currentTrick.cards[i].getNode(this.state.trump,
@@ -388,14 +414,16 @@ App.prototype.getTrick = function() {
         this.annotateCard(currentTrick.cards[i], card);
         trick.appendChild(card);
     }
-    return trick;
+    return wrap;
 };
 App.prototype.playCard = function(card) {
-    if (this.state.tricks.length !== this.state.round) {
+    var state = this.state;
+
+    if (state.tricks.length !== state.round) {
         console.log('push new trick');
-        var giver = this.state.tricks.length === 0 ?
-            this.state.giver : this.state.tricks[this.state.tricks.length - 1].winner;
-        this.state.tricks.push({
+        var giver = state.tricks.length === 0 ?
+            state.giver : state.tricks[state.tricks.length - 1].winner;
+        state.tricks.push({
             giver: giver,
             winner: null,
             color: card.color,
@@ -403,25 +431,58 @@ App.prototype.playCard = function(card) {
         });
     }
 
-    var currentTrick = this.state.tricks[this.state.round - 1];
+    var currentTrick = state.tricks[state.round - 1];
     currentTrick.cards.push(card);
-    this.state.played.push(card);
-    console.log('currentTrick', currentTrick);
-
-    this.render();
+    state.played.push(card);
 
     if (currentTrick.cards.length === PLAYERS.length) {
-        this.state.round += 1;
-        // todo calculate winner
-        currentTrick.winner = Math.randInt(0, PLAYERS.length);
+        state.round += 1;
+        currentTrick.winner = this.getWinner(currentTrick);
+        if (currentTrick.winner === PLAYER) {
+            state.points += currentTrick.cards.sum(function (card) {
+                return card.getPoints(state.trump);
+            });
+            if (state.round-1 === ROUNDS) {
+                state.points += LAST_TRICK_POINTS;
+            }
+        }
         console.log('trick over, determining winner', currentTrick.winner);
     }
+    this.render();
+};
+App.prototype.getWinner = function(trick) {
+    var trump = this.state.trump;
+    var highest = trick.cards.reduce(function (high, card) {
+        if (high === null) {
+            return card;
+        }
+        if (card.isHigherThan(high, trick.color, trump)) {
+            return card;
+        }
+        return high;
+    }, null);
+
+    return (trick.giver + trick.cards.indexOf(highest)) % PLAYERS.length;
+};
+/**
+ * Whose turn is it?
+ */
+App.prototype.getPlayerTurn = function() {
+    var state = this.state;
+    if (state.tricks.length === 0) {
+        return state.giver;
+    }
+    var currentTrick = state.tricks[state.tricks.length - 1];
+    if (currentTrick.cards.length === PLAYERS.length) {
+        return currentTrick.winner;
+    }
+    return (currentTrick.giver + currentTrick.cards.length) % PLAYERS.length;
 };
 
 
 document.addEventListener('DOMContentLoaded', function () {
     var app = new App();
-    app.fake(MODES.PLAY);
+    // app.fake(MODES.PLAY);
     app.render();
 });
 

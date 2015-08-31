@@ -7,7 +7,8 @@ html,
 body {
     color: #fffaff;
     text-shadow: 0 0 1px rgba(0,0,0,.9);
-    width: 1200px;
+    min-width: 900px;
+    max-width: 1200px;
     margin: 1em auto;
     font: normal 19px/1.64 sans-serif;
     background: #259416;
@@ -17,6 +18,9 @@ body {
 }
 p {
     margin: 1em 0 .3em 0;
+}
+.center {
+    text-align: center;
 }
 #game {
     margin-top: 60px;
@@ -84,7 +88,9 @@ ul.float li:not(:last-child):after {
 }
 
 .trick {
-    border: 1px solid rgba(0,0,0,0.5);
+    margin: 0 auto;
+    background: rgba(0,0,0,0.5);
+    border-radius: 1em;
     position: relative;
     width: 400px;
     height: 400px;
@@ -96,20 +102,20 @@ ul.float li:not(:last-child):after {
     left: 50%;
 }
 .trick .card.top {
-    margin-top: -160px;
+    margin-top: -165px;
     margin-left: -52px;
 }
 .trick .card.left {
     margin-top: -80px;
-    margin-left: -156px;
+    margin-left: -166px;
 }
 .trick .card.bottom {
-    margin-top: 0;
+    margin-top: 5px;
     margin-left: -52px;
 }
 .trick .card.right {
     margin-top: -80px;
-    margin-left: 52px;
+    margin-left: 62px;
 }
 
 .card {
@@ -124,6 +130,34 @@ ul.float li:not(:last-child):after {
     border-radius: 6px;
     overflow: hidden;
     text-indent: -1000px;
+    cursor: default;
+}
+.card.clickable {
+    cursor: pointer;
+}
+.card.not-clickable {
+    cursor: not-allowed;
+}
+.card.not-clickable:after {
+    display: block;
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: rgba(0, 0, 0, .3);
+    z-index: 2;
+}
+.card.player {
+    font-size: 1em;
+    color: #444;
+    text-shadow: none;
+    background: #f0f0f0;
+    text-indent: inherit;
+}
+.card.clickable:hover {
+    box-shadow: 0 0 10px 4px rgba(255, 0, 0, 0.75);
 }
 .card:focus {
     z-index: 1000;

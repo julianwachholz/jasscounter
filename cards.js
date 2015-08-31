@@ -18,6 +18,17 @@ var VALUES = [
     'König',
     'As'
 ];
+var TRUMP_VALUES = [
+    '6',
+    '7',
+    '8',
+    '10',
+    'Ober',
+    'König',
+    'As',
+    '9',
+    'Under'
+];
 
 var VALUE_CLASSES = [
     'c6',
@@ -44,12 +55,13 @@ Card.prototype.toString = function(trump) {
 Card.prototype.getNode = function(trump, extraClass) {
     var node = document.createElement('button');
     node.innerHTML = this.toString(trump);
-    node.className = [
+    node.classList.add(
         'card',
         COLORS[this.color].toLowerCase(),
-        VALUE_CLASSES[this.value],
-        extraClass
-    ].join(' ');
+        VALUE_CLASSES[this.value]);
+    if (extraClass) {
+        node.classList.add(extraClass);
+    }
     return node;
 };
 Card.prototype.getPoints = function(trump) {
@@ -69,6 +81,25 @@ Card.prototype.getPoints = function(trump) {
         case 8: return 11;
         default: return 0;
     }
+};
+Card.prototype.isHigherThan = function(card, trickColor, trump) {
+    if (this.color === trump) {
+        if (card.color !== trump) {
+            return true;
+        }
+        return TRUMP_VALUES.indexOf(VALUES[this.value])
+               > TRUMP_VALUES.indexOf(VALUES[card.value]);
+    }
+    if (card.color === trump) {
+        return false;
+    }
+    if (this.color === trickColor) {
+        if (card.color !== trickColor) {
+            return true;
+        }
+        return this.value > card.value;
+    }
+    return false;
 };
 Card.prototype.isEqual = function(card) {
     return this.color === card.color &&
