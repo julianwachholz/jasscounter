@@ -41,13 +41,14 @@ var Card = function(color, value) {
 Card.prototype.toString = function(trump) {
     return COLORS[this.color] + ' ' + VALUES[this.value];
 };
-Card.prototype.getNode = function(trump) {
+Card.prototype.getNode = function(trump, extraClass) {
     var node = document.createElement('button');
     node.innerHTML = this.toString(trump);
     node.className = [
         'card',
         COLORS[this.color].toLowerCase(),
         VALUE_CLASSES[this.value],
+        extraClass
     ].join(' ');
     return node;
 };

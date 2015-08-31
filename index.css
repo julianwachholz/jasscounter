@@ -83,6 +83,35 @@ ul.float li:not(:last-child):after {
     content: ', ';
 }
 
+.trick {
+    border: 1px solid rgba(0,0,0,0.5);
+    position: relative;
+    width: 400px;
+    height: 400px;
+}
+
+.trick .card {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+}
+.trick .card.top {
+    margin-top: -160px;
+    margin-left: -52px;
+}
+.trick .card.left {
+    margin-top: -80px;
+    margin-left: -156px;
+}
+.trick .card.bottom {
+    margin-top: 0;
+    margin-left: -52px;
+}
+.trick .card.right {
+    margin-top: -80px;
+    margin-left: 52px;
+}
+
 .card {
     position: relative;
     display: inline-block;
@@ -95,6 +124,9 @@ ul.float li:not(:last-child):after {
     border-radius: 6px;
     overflow: hidden;
     text-indent: -1000px;
+}
+.card:focus {
+    z-index: 1000;
 }
 
 .card-badge {

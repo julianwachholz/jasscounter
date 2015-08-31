@@ -5,10 +5,20 @@ var MODES = {
     TRUMP: 'Trump',
     DEAL: 'Deal',
     ESTIMATE: 'Estimate',
+    GIVER: 'Giver',
     PLAY: 'Play'
 };
 
+var PLAYERS = [
+    ['top', 'Oben'],
+    ['left', 'Links'],
+    ['bottom', 'Unten (Spieler)'],
+    ['right', 'Rechts']
+];
+
 var ROUNDS = 9;
+var MAX_POINTS = 157;
+var LAST_TRICK_POINTS = 5;
 
 var gameNode = document.getElementById('game');
 var node = function (name, opts, className) {
@@ -64,7 +74,8 @@ App.prototype.reset = function() {
         tricks: [],
         estimate: null,
         points: 0,
-        round: 1
+        round: 1,
+        giver: null
     };
 };
 /**
@@ -90,7 +101,7 @@ App.prototype.fake = function (mode, rounds) {
             return hand.indexOf(card) === -1;
         });
         hand.push(cards[Math.randInt(cards.length)]);
-        console.log('[fake] dealt card ' + hand[hand.length - 1].toString());
+        console.debug('[fake] dealt card ' + hand[hand.length - 1].toString());
     }
     this.state.hand = hand;
 
@@ -109,9 +120,16 @@ App.prototype.fake = function (mode, rounds) {
     }
 
     total = points.sum();
-    this.verifyEstimate(null, Math.randInt(total - total * 0.1, total + total * 0.4));
-    console.log('[fake] points in hand %d, guesstimate: %d', total, this.state.estimate);
+    this.verifyEstimate(null, Math.randInt(
+        Math.max(0, total - total * 0.1), Math.min(MAX_POINTS, total + total * 0.4)));
+    console.debug('[fake] points in hand %d, guesstimate: %d', total, this.state.estimate);
 
+    if (mode === MODES.GIVER) {
+        return;
+    }
+
+    this.setGiver(Math.randInt(0, PLAYERS.length));
+    console.debug('[fake] giver set to ' + this.state.giver);
     this.mode = mode;
 };
 
@@ -142,9 +160,11 @@ App.prototype.getCardListNoHand = function(callback) {
     }), callback);
 };
 App.prototype.getCardListHand = function(callback) {
-    var hand = this.state.hand;
+    var hand = this.state.hand,
+        played = this.state.played;
+
     return this.getCardList(CARDS.filter(function (card) {
-        return hand.indexOf(card) !== -1;
+        return hand.indexOf(card) !== -1 && played.indexOf(card) === -1;
     }), callback, true);
 };
 
@@ -267,13 +287,50 @@ App.prototype.verifyEstimate = function(event, value) {
     }
 
     var estimate = value || parseInt(event.target.estimate.value, 10);
-    if (estimate >= 0 && estimate <= 157) {
-        this.mode = MODES.PLAY;
+    if (estimate >= 0 && estimate <= MAX_POINTS) {
+        this.mode = MODES.GIVER;
         this.state.estimate = estimate;
         this.state.points = 0;
         document.getElementById('estimate').style.display = 'block';
         document.getElementById('estimate-guess').innerHTML = estimate;
     }
+    this.render();
+};
+
+
+/**
+ * Which player goes first?
+ */
+App.prototype.renderGiver = function() {
+    this.showPoints();
+    var state = this.state,
+        unplayedCards = CARDS.filter(function (card) {
+            return state.hand.indexOf(card) === -1
+                && state.played.indexOf(card) === -1;
+        });
+
+    gameNode.appendChild(p('Klicke auf den Spieler mit der Vorhand:'));
+    gameNode.appendChild(this.getPlayerList(this.setGiver.bind(this)));
+
+    gameNode.appendChild(p('Karten im Spiel'));
+    gameNode.appendChild(this.getCardList(unplayedCards));
+
+    gameNode.appendChild(p('Deine Hand'));
+    gameNode.appendChild(this.getCardListHand());
+};
+App.prototype.getPlayerList = function(callback) {
+    var player, list, button;
+    list = node('div');
+    for (player = 0; player < PLAYERS.length; player += 1) {
+        button = node('button', PLAYERS[player][1], 'color color-' + player);
+        button.onclick = callback.bind(this, player);
+        list.appendChild(button);
+    }
+    return list;
+};
+App.prototype.setGiver = function(player) {
+    this.state.giver = player;
+    this.mode = MODES.PLAY;
     this.render();
 };
 
@@ -285,6 +342,9 @@ App.prototype.renderPlay = function() {
     this.showPoints();
     var state = this.state,
         handPoints = state.hand.sum(function (card) {
+            if (state.played.indexOf(card) !== -1) {
+                return 0;
+            }
             return card.getPoints(state.trump);
         }),
         unplayedCards = CARDS.filter(function (card) {
@@ -295,8 +355,7 @@ App.prototype.renderPlay = function() {
             return card.getPoints(state.trump);
         });
 
-    gameNode.appendChild(p('Stich ' + state.round + ' / ' + ROUNDS + '<br>Klick auf die Karten in gespielter Reihenfolge.'));
-    gameNode.appendChild(this.getCardsInBet());
+    gameNode.appendChild(this.getTrick());
 
     gameNode.appendChild(p('Karten im Spiel (' + unplayedPoints + ')'));
     gameNode.appendChild(this.getCardList(unplayedCards, this.playCard.bind(this)));
@@ -308,19 +367,55 @@ App.prototype.showPoints = function() {
     document.getElementById('estimate-points').innerHTML = this.state.points;
     document.getElementById('estimate-diff').innerHTML = Math.abs(this.state.estimate - this.state.points);
 };
-App.prototype.getCardsInBet = function() {
-    var list = node('div');
-    return list;
+App.prototype.getTrick = function() {
+    var state = this.state,
+        trick, i, card, currentTrick;
+    trick = node('div', '', 'trick');
+
+    if (state.tricks.length <= 0) {
+        trick.appendChild(p('Stich ' + state.round + ' / ' + ROUNDS
+            + '<br>Klick auf die Karten in gespielter Reihenfolge.'));
+        return trick;
+    }
+    currentTrick = state.tricks[state.tricks.length - 1];
+
+    var trickPoints = currentTrick.cards.sum(function (card) { return card.getPoints(state.trump); });
+    trick.appendChild(p('Stich ' + state.round + ' / ' + ROUNDS + ' (' + trickPoints + ')'));
+
+    for (i = 0; i < currentTrick.cards.length; i += 1) {
+        card = currentTrick.cards[i].getNode(this.state.trump,
+            PLAYERS[(i + currentTrick.giver) % PLAYERS.length][0]);
+        this.annotateCard(currentTrick.cards[i], card);
+        trick.appendChild(card);
+    }
+    return trick;
 };
 App.prototype.playCard = function(card) {
-    console.log('play card', card);
     if (this.state.tricks.length !== this.state.round) {
+        console.log('push new trick');
+        var giver = this.state.tricks.length === 0 ?
+            this.state.giver : this.state.tricks[this.state.tricks.length - 1].winner;
         this.state.tricks.push({
+            giver: giver,
             winner: null,
+            color: card.color,
             cards: []
         });
     }
+
     var currentTrick = this.state.tricks[this.state.round - 1];
+    currentTrick.cards.push(card);
+    this.state.played.push(card);
+    console.log('currentTrick', currentTrick);
+
+    this.render();
+
+    if (currentTrick.cards.length === PLAYERS.length) {
+        this.state.round += 1;
+        // todo calculate winner
+        currentTrick.winner = Math.randInt(0, PLAYERS.length);
+        console.log('trick over, determining winner', currentTrick.winner);
+    }
 };
 
 
